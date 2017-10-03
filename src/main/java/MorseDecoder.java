@@ -53,9 +53,20 @@ public class MorseDecoder {
 
         double[] sampleBuffer = new double[BIN_SIZE * inputFile.getNumChannels()];
         for (int binIndex = 0; binIndex < totalBinCount; binIndex++) {
+
             // Get the right number of samples from the inputFile
             // Sum all the samples together and store them in the returnBuffer
+            inputFile.readFrames(sampleBuffer, BIN_SIZE);
+
+            for (double val : sampleBuffer) {
+                returnBuffer[binIndex] += Math.abs(val);
+            }
         }
+
+        for (double val : returnBuffer) {
+            System.out.println(val);
+        }
+
         return returnBuffer;
     }
 
@@ -63,7 +74,8 @@ public class MorseDecoder {
     private static final double POWER_THRESHOLD = 10;
 
     /** Bin threshold for dots or dashes. Related to BIN_SIZE. You may need to modify this value. */
-    private static final int DASH_BIN_COUNT = 8;
+    private static final int DASH_BIN_COUNT = 10;
+
 
     /**
      * Convert power measurements to dots, dashes, and spaces.
@@ -82,12 +94,54 @@ public class MorseDecoder {
          * transitions. You will also have to store how much power or silence you have seen.
          */
 
+        String message = "";
+
+        boolean wasPower = true;
+
+        int count = 0;
+
+        for (double current : powerMeasurements) {
+            if (current < POWER_THRESHOLD) { // Current is power OFF
+
+                if (wasPower) { // Current before this was ON
+
+                    if (count >= DASH_BIN_COUNT) { // Previous ON was long
+                        message += "-";
+                    } else { // Prevous ON was short
+                        message += ".";
+                    }
+                    wasPower = false;
+                    count = 1;
+                    continue;
+                }
+                count++;
+                wasPower = false;
+            } else { // Current is power ON
+
+                if (!wasPower) { // Previous power was OFF
+
+                    if (count >= DASH_BIN_COUNT) { // Previous OFF was long
+                        message += " ";
+                    }
+
+                    wasPower = true;
+                    count = 1;
+                    continue;
+                }
+
+                count++;
+                wasPower = true;
+            }
+
+        }
+
         // if ispower and waspower
         // else if ispower and not waspower
         // else if issilence and wassilence
         // else if issilence and not wassilence
 
-        return "";
+        //return message;
+        return message;
     }
 
     /**
