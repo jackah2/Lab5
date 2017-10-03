@@ -63,10 +63,6 @@ public class MorseDecoder {
             }
         }
 
-        for (double val : returnBuffer) {
-            System.out.println(val);
-        }
-
         return returnBuffer;
     }
 
